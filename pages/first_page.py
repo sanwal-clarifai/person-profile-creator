@@ -143,9 +143,9 @@ if __name__ == "__main__":
         urls = []
         scores = []
         names = []
-        image_df = pd.DataFrame(columns=['url', 'input_type', 'score', 'metadata'])
+        image_df = pd.DataFrame(columns=['url', 'input_type', 'score', 'confidence','metadata'])
         video_df = pd.DataFrame(columns=['url', 'input_type','file_name', 'frame_time',
-                                         'frame_index', 'score', 'metadata'])
+                                         'frame_index', 'score','confidence', 'metadata'])
         for i in range(len(vis_search_req.hits)):
             if 'image' in MessageToDict(vis_search_req.hits[i].input.data):
                 img_url = vis_search_req.hits[i].input.data.image.url
@@ -155,6 +155,7 @@ if __name__ == "__main__":
                 score = vis_search_req.hits[i].score
                 metadata = vis_search_req.hits[i].input.data.metadata
 
+                # Get name or id of the person
                 name = ''
                 if "id" in metadata.keys():
                     name = metadata["id"]
@@ -166,9 +167,16 @@ if __name__ == "__main__":
                     name = str(metadata["person_name"])
                 else:
                     name = metadata
+                # Get the Confidence category if there is one,else confidence is high.
+
+                if 'confidence' in metadata.keys():
+                    confidence = metadata['confidence']
+                else:
+                    confidence = 'High'
 
                 image_df.loc[len(image_df)] = {'url': img_url, 'input_type': input_type, 
-                                              'score': score, 'metadata': name}#+"\n"+file_name}
+                                              'score': score, 'metadata': name,
+                                              'confidence': confidence}#+"\n"+file_name}
             else:
                 img_url = vis_search_req.hits[i].input.data.video.url
                 
@@ -202,9 +210,15 @@ if __name__ == "__main__":
                 #     file_name = metadata['filename']
                 else:
                     name = metadata
+                # Get the Confidence category if there is one,else confidence is high.
+                if 'confidence' in metadata.keys():
+                    confidence = metadata['confidence']
+                else:
+                    confidence = 'High'
 
                 video_df.loc[len(video_df)] = {'url': img_url, 'input_type': input_type, 'frame_time': frame_time_string, 
-                                                'frame_index': frame_index,'score': score, 'metadata': name, 'file_name': file_name}
+                                                'frame_index': frame_index,'score': score, 'metadata': name,
+                                                  'file_name': file_name,'confidence': confidence}
 
         filtered_images = image_df[image_df['score'] > confidence_threshold].drop_duplicates(subset='score')
         video_df['frame_time_seconds'] = video_df['frame_time'].apply(convert_to_seconds)
