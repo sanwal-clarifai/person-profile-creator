@@ -8,7 +8,6 @@ from clarifai.client import create_stub
 from clarifai.modules.css import ClarifaiStreamlitCSS
 from clarifai.urls.helper import ClarifaiUrlHelper
 from google.protobuf import json_format
-import base64
 import numpy as np
 import requests
 from google.protobuf.json_format import MessageToDict

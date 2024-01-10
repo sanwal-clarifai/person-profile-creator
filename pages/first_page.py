@@ -10,12 +10,10 @@ from clarifai.urls.helper import ClarifaiUrlHelper
 from clarifai_grpc.grpc.api import resources_pb2, service_pb2
 from clarifai_grpc.grpc.api.status import status_code_pb2
 from google.protobuf import json_format
-import base64
 import numpy as np
 import io
 from google.protobuf.json_format import MessageToDict
 import requests
-import cv2, urllib, PIL
 from PIL import Image
 from io import BytesIO
 import requests
