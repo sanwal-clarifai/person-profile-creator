@@ -36,10 +36,12 @@ def list_1000_inputs():
     )
     return list_inputs_response
 
-def display_images_in_rows(df, header_title, images_per_row=2, standard_height=200):
+def display_images_in_rows(df, header_title, images_per_row=2, standard_height=200, spacer_width=1):
     """
-    Displays images in rows with a specified number of images per row.
+    Displays images or videos in rows with a specified number of items per row.
     Each image is resized to have a consistent height, maintaining its aspect ratio.
+    Videos are displayed using Streamlit's st.video function.
+    Spacing is added between columns.
     """
     if not df.empty:
         st.header(header_title)
@@ -50,31 +52,47 @@ def display_images_in_rows(df, header_title, images_per_row=2, standard_height=2
             end_index = start_index + images_per_row
             row_df = df.iloc[start_index:end_index]
 
-            cols = st.columns(images_per_row)
-            for col, (_, image_data) in zip(cols, row_df.iterrows()):
+            # Adjust the number of columns to include spacers
+            cols = st.columns([1]*images_per_row + [spacer_width]*(images_per_row-1))
+
+            # Iterate over columns with content, skipping spacer columns
+            col_index = 0
+            for _, image_data in row_df.iterrows():
+                col = cols[col_index]
+                col_index += 1 + spacer_width  # Skip the spacer columns
                 url = image_data['url']
+                filename = image_data['filename']
+
                 if url:
-                    response = requests.get(url, headers=headers, stream=True)
-                    # st.write(response)
-                    # st.write(url)
-                    img = Image.open(BytesIO(response.content))
-                    
-                    # Calculate new width to maintain aspect ratio
-                    aspect_ratio = img.width / img.height
-                    new_width = int(standard_height * aspect_ratio)
+                    if filename.lower().endswith('.mp4'):
+                        # Display video
+                        col.video(url)
+                    else:
+                        # Display image
+                        response = requests.get(url, headers=headers, stream=True)
+                        img = Image.open(BytesIO(response.content))
 
-                    # Resize the image
-                    img = img.resize((new_width, standard_height))
+                        # Calculate new width to maintain aspect ratio
+                        aspect_ratio = img.width / img.height
+                        new_width = int(standard_height * aspect_ratio)
 
-                    # Convert the image object back to bytes for Streamlit to display
-                    buf = BytesIO()
-                    img.save(buf, format="PNG")
-                    byte_im = buf.getvalue()
-                    # Truncate filename to 10 characters if longer
-                    truncated_filename = (image_data['filename'][:10] + '...') if len(image_data['filename']) > 6 else image_data['filename']
+                        # Resize the image
+                        img = img.resize((new_width, standard_height))
 
-                    caption = f"Filename: {truncated_filename}, \n\n Person ID: {image_data['person_id']}"
-                    col.image(byte_im, caption=caption, use_column_width=False)
+                        # Convert the image object back to bytes for Streamlit to display
+                        buf = BytesIO()
+                        img.save(buf, format="PNG")
+                        byte_im = buf.getvalue()
+
+                        # Truncate filename to 10 characters if longer
+                        truncated_filename = (filename[:10] + '...') if len(filename) > 10 else filename
+
+                        caption = f"Filename: {truncated_filename}, \n\n Person ID: {image_data['person_id']}"
+                        col.image(byte_im, caption=caption, use_column_width=False)
+
+            if row_num < total_rows - 1:
+                st.write("")  # Add space after each row except the last one
+
 
 
 if __name__ == "__main__":
@@ -85,18 +103,19 @@ if __name__ == "__main__":
     list_inputs_response = list_1000_inputs()
     # print(list_inputs_response)
 
-    # Create a dropdown with a default '-' option followed by options from 'Person-00' to 'Person-14'
-    person_choices = ['-', *[f"Person-{str(i).zfill(2)}" for i in range(1,15)]]
+    # Create a dropdown with a default '-' option followed by options from 'Person-01' to 'Person-14' and then from 'Person-21' to 'Person-57'
+    person_choices = ['-', *[f"Person-{str(i).zfill(2)}" for i in range(1, 15)], *[f"Person-{str(i).zfill(2)}" for i in range(21, 58)]]
     selected_person = st.selectbox("Select a person:", person_choices, index=0)
 
     if selected_person:
         df = pd.DataFrame(columns=['input_id', 'url', 'metadata','filename', 'person_id', 'confidence'])
         for i in range(len(list_inputs_response.inputs)):
-            st.write(list_inputs_response.inputs[i].data)
-            if 'image' in MessageToDict(list_inputs_response.input.data):
-                img_url = list_inputs_response.input.data.image.url
+            # st.write(list_inputs_response.inputs[i].data)
+            if 'image' in MessageToDict(list_inputs_response.inputs[i].data):
+                img_url = list_inputs_response.inputs[i].data.image.url
             else:
-                img_url = list_inputs_response.input.data.video.url
+                img_url = list_inputs_response.inputs[i].data.video.url
+            # st.write(img_url)
             metadata = list_inputs_response.inputs[i].data.metadata
             if "id" in metadata.keys() and metadata['id'] == selected_person :
                 person_id = metadata['id']
@@ -129,38 +148,4 @@ if __name__ == "__main__":
         # Display images with low confidence
         display_images_in_rows(low_confidence_df, "Images with Low Confidence", images_per_row=2)
 
-        # # Display images with high confidence
-        # if not high_confidence_df.empty:
-        #     st.header("Images with High Confidence")
-        #     col1, col2 = st.columns(2)
-        #     for index, row in high_confidence_df.iterrows():
-        #         url = row['url']
-        #         if url == '':
-        #             continue
-        #         caption = f"Filename: {row['filename']}, \n Person ID: {row['person_id']}"
-        #         if index % 2 == 0:
-        #             with col1:
-        #                 st.image(url, caption=caption)
-        #         else:
-        #             with col2:
-        #                 st.image(url, caption=caption)
-
-        # # Display images with low confidence
-        # if not low_confidence_df.empty:
-        #     st.header("Images with Low Confidence")
-        #     col1, col2 = st.columns(2)
-        #     for index, row in low_confidence_df.iterrows():
-        #         url = row['url']
-        #         if url == '':
-        #             continue
-        #         caption = f"Filename: {row['filename']}, \n Person ID: {row['person_id']}"
-        #         if index % 2 == 0:
-        #             with col1:
-        #                 st.image(url, caption=caption)
-        #         else:
-        #             with col2:
-        #                 st.image(url, caption=caption)
        
-   
-
-    
