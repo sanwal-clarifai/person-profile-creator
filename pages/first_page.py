@@ -9,6 +9,7 @@ from clarifai.modules.css import ClarifaiStreamlitCSS
 from clarifai.urls.helper import ClarifaiUrlHelper
 from clarifai_grpc.grpc.api import resources_pb2, service_pb2
 from clarifai_grpc.grpc.api.status import status_code_pb2
+import matplotlib.pyplot as plt
 from google.protobuf import json_format
 import numpy as np
 import io
