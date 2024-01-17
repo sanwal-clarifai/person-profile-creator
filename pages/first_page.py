@@ -220,7 +220,7 @@ if __name__ == "__main__":
         filtered_videos = video_df[video_df['score'] > confidence_threshold]
         # Drop duplicates based on 'file_name', 'frame_index', and 'score'
         filtered_videos = filtered_videos.drop_duplicates(subset=['file_name', 'frame_index', 'score'])
-        with st.expander("Filtered Images", expnded = False):
+        with st.expander("Filtered Images", expanded=False):
           st.write(filtered_images)
 
         # Display the images from filtered_images
