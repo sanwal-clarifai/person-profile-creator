@@ -126,19 +126,18 @@ if __name__ == "__main__":
                     confidence = metadata['confidence']
                 else: 
                     confidence = 'high'
-                df.loc[len(df)] = {'url': img_url, 'input_type': input_type, 
-                                              'score': score, 'metadata': name,
-                                              'confidence': confidence}#+"\n"+file_name}
-                df = df.append({'input_id': list_inputs_response.inputs[i].id,
-                                'url': img_url,
-                                'metadata': metadata,
-                                'person_id': person_id,
-                                'filename':file_name,
-                                'confidence': confidence}, ignore_index=True)
-
+                df.loc[len(df)] = {'input_id': list_inputs_response.inputs[i].id,
+                                    'url': img_url,
+                                    'metadata': metadata,
+                                    'person_id': person_id,
+                                    'filename':file_name,
+                                    'confidence': confidence}
         # Sort the dataframe by the confidence column
         sorted_df = df.sort_values(by='confidence')
-        st.write(sorted_df)
+
+        # Add collapsible container for the dataframe
+        with st.expander("Sorted Dataframe", expanded=False):
+            st.write(sorted_df)
 
         # Create separate dataframes based on confidence values
         high_confidence_df = sorted_df[sorted_df['confidence'] == 'high']
