@@ -220,7 +220,7 @@ if __name__ == "__main__":
         filtered_videos = video_df[video_df['score'] > confidence_threshold]
         # Drop duplicates based on 'file_name', 'frame_index', and 'score'
         filtered_videos = filtered_videos.drop_duplicates(subset=['file_name', 'frame_index', 'score'])
-        with st.expanded("Filtered Images", expnded = False):
+        with st.expander("Filtered Images", expnded = False):
           st.write(filtered_images)
 
         # Display the images from filtered_images
@@ -263,7 +263,7 @@ if __name__ == "__main__":
         grouped_videos.columns = ['metadata', 'file_name', 'frame_indices', 'frame_count', 'min_score', 'max_score']
 
         # Display the grouped videos
-        with st.expanded("Grouped Videos", expanded=False):
+        with st.expander("Grouped Videos", expanded=False):
           st.write(grouped_videos)
         # Set to keep track of displayed video file names
         displayed_video_files = set()
