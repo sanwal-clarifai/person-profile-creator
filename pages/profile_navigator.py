@@ -69,26 +69,33 @@ def display_images_in_rows(df, header_title, images_per_row=2, standard_height=2
                     else:
                         # Display image
                         response = requests.get(url, headers=headers, stream=True)
-                        img = Image.open(BytesIO(response.content))
+                        print(response)
+                        try:
+                            # Display image
+                            response = requests.get(url, headers=headers, stream=True)
+                            img = Image.open(BytesIO(response.content))
 
-                        # Calculate new width to maintain aspect ratio
-                        aspect_ratio = img.width / img.height
-                        new_width = int(standard_height * aspect_ratio)
+                            # Calculate new width to maintain aspect ratio
+                            aspect_ratio = img.width / img.height
+                            new_width = int(standard_height * aspect_ratio)
 
-                        # Resize the image
-                        img = img.resize((new_width, standard_height))
+                            # Resize the image
+                            img = img.resize((new_width, standard_height))
 
-                        # Convert the image object back to bytes for Streamlit to display
-                        buf = BytesIO()
-                        img.save(buf, format="PNG")
-                        byte_im = buf.getvalue()
+                            # Convert the image object back to bytes for Streamlit to display
+                            buf = BytesIO()
+                            img.save(buf, format="PNG")
+                            byte_im = buf.getvalue()
 
-                        # Truncate filename to 10 characters if longer
-                        truncated_filename = (filename[:10] + '...') if len(filename) > 10 else filename
+                            # Truncate filename to 10 characters if longer
+                            truncated_filename = (filename[:10] + '...') if len(filename) > 10 else filename
 
-                        caption = f"Filename: {truncated_filename}, \n\n Person ID: {image_data['person_id']}"
-                        col.image(byte_im, caption=caption, use_column_width=False)
+                            caption = f"Filename: {truncated_filename}, \n\n Person ID: {image_data['person_id']}"
+                            col.image(byte_im, caption=caption, use_column_width=False)
 
+                        except Exception as e:
+                            # st.write(f"Error displaying image: {e}")
+                            pass
             if row_num < total_rows - 1:
                 st.write("")  # Add space after each row except the last one
 
@@ -102,12 +109,13 @@ if __name__ == "__main__":
     list_inputs_response = list_1000_inputs()
     # print(list_inputs_response)
 
-    # Create a dropdown with a default '-' option followed by options from 'Person-01' to 'Person-14' and then from 'Person-21' to 'Person-57'
-    person_choices = ['-', *[f"Person-{str(i).zfill(2)}" for i in range(1, 15)], *[f"Person-{str(i).zfill(2)}" for i in range(21, 58)]]
+    # Create a dropdown with a default '-' option followed by options from 'Person-01' to 'Person-57'
+    person_choices = ['-', *[f"Person-{str(i).zfill(2)}" for i in range(1, 58)]]
     selected_person = st.selectbox("Select a person:", person_choices, index=0)
 
     if selected_person:
         df = pd.DataFrame(columns=['input_id', 'url', 'metadata','filename', 'person_id', 'confidence'])
+        df = pd.DataFrame(columns=['input_id', 'url', 'filename', 'person_id', 'confidence'])
         for i in range(len(list_inputs_response.inputs)):
             # st.write(list_inputs_response.inputs[i].data)
             if 'image' in MessageToDict(list_inputs_response.inputs[i].data):
@@ -128,7 +136,7 @@ if __name__ == "__main__":
                     confidence = 'high'
                 df.loc[len(df)] = {'input_id': list_inputs_response.inputs[i].id,
                                     'url': img_url,
-                                    'metadata': metadata,
+                                    # 'metadata': metadata,
                                     'person_id': person_id,
                                     'filename':file_name,
                                     'confidence': confidence}
@@ -143,10 +151,28 @@ if __name__ == "__main__":
         high_confidence_df = sorted_df[sorted_df['confidence'] == 'high']
         low_confidence_df = sorted_df[sorted_df['confidence'] == 'low']
 
+        high_confidence_empty = False 
+        low_confidence_empty = False
+        both_empty = False
+        if len(high_confidence_df) == 0:
+            high_confidence_empty = True
+            # st.write("No images with high confidence")
+            
+        elif len(low_confidence_df) == 0:
+            low_confidence_empty = True
+            # st.write("No images with low confidence")
+            
+        elif len(high_confidence_df) == 0 and len(low_confidence_df) == 0:
+            both_empty = True
+            # st.write("Profile does not exist")
+        
+        if high_confidence_df.empty and low_confidence_df.empty:        
+            st.write("Profile does not exist")
+        
         # Display images with high confidence
-        display_images_in_rows(high_confidence_df, "Images with High Confidence", images_per_row=2)
+        display_images_in_rows(high_confidence_df, "Inputs with High Confidence", images_per_row=2)
 
         # Display images with low confidence
-        display_images_in_rows(low_confidence_df, "Images with Low Confidence", images_per_row=2)
+        display_images_in_rows(low_confidence_df, "Inputs with Low Confidence", images_per_row=2)
 
        
